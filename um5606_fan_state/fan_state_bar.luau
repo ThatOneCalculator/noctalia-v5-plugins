@@ -1,5 +1,10 @@
--- Scripted widget port of the asus_um5606_fan_state plugin.
--- Cycles through fan states on left click, polls current state on a timer.
+-- ASUS UM5606 Fan State - bar widget (thin presentation client).
+--
+-- The fan control logic lives in the [[service]] (fan_state_service.luau), which
+-- runs for the whole session. This widget only reflects the published "status"
+-- and cycles states by writing to the "command" channel.
+
+local showLabel = noctalia.getConfig("show_label")
 
 local STATES = {
     [0] = { label = "Standard",         glyph = "car-fan",   color = "on_surface" },
@@ -9,59 +14,56 @@ local STATES = {
 }
 
 local fanState = -1
+local available = false
+
+local function send(action)
+    noctalia.state.set("command", action)
+end
 
 local function applyState(state)
     local info = STATES[state]
     if not info then
         barWidget.setGlyph("car-fan")
-        -- barWidget.setText("Unknown")
+        if showLabel then
+            barWidget.setText("Unknown")
+        end
         barWidget.setGlyphColor("on_surface")
         barWidget.setColor("on_surface")
         return
     end
+
     barWidget.setGlyph(info.glyph)
-    -- barWidget.setText(info.label)
+    if showLabel then
+        barWidget.setText(info.label)
+    end
     barWidget.setGlyphColor(info.color)
     barWidget.setColor(info.color)
 end
 
-local function refreshFanState()
-    local ok = noctalia.runAsync("fan_state get --int", function(result)
-        if result.exitCode ~= 0 then
-            noctalia.log("fan_control: failed to get fan state")
-            return
-        end
-
-        local parsed = tonumber(result.stdout:match("^%s*(.-)%s*$"))
-        if parsed == nil then
-            noctalia.log("fan_control: failed to parse fan state")
-            return
-        end
-
-        if parsed ~= fanState then
-            fanState = parsed
-            applyState(fanState)
-        end
-    end)
-
-    if not ok then
-        noctalia.log("fan_control: failed to start fan state command")
+local function applyStatus(status)
+    if type(status) == "table" then
+        fanState = tonumber(status.state) or -1
+        available = status.available and true or false
     end
-end
 
--- initial setup
-local pollInterval = tonumber(barWidget.getConfig("poll_interval", 2000)) or 2000
-barWidget.setUpdateInterval(pollInterval)
-applyState(-1)
-refreshFanState()
+    if not available then
+        barWidget.setGlyph("car-fan")
+        if showLabel then
+            barWidget.setText("Unavailable")
+        end
+        barWidget.setGlyphColor("on_surface_variant")
+        barWidget.setColor("on_surface_variant")
+        return
+    end
 
-function update()
-    refreshFanState()
+    applyState(fanState)
 end
 
 function onClick()
-    local next = (fanState + 1) % 4
-    noctalia.runAsync("fan_state set " .. tostring(next))
-    fanState = next
-    applyState(fanState)
+    if not available then return end
+    send("cycle")
 end
+
+-- Sync the current status on load, then track changes.
+applyStatus(noctalia.state.get("status"))
+noctalia.state.watch("status", applyStatus)
