@@ -1,6 +1,6 @@
 id = "thatonecalculator/um5606_fan_state"
 name = "ASUS UM5606 Fan State"
-version = "1.0.1"
+version = "1.0.2"
 min_noctalia = "5.0.0"
 author = "ThatOneCalculator"
 license = "MIT"
@@ -13,6 +13,15 @@ key = "show_label"
 type = "bool"
 label = "Show label"
 default = false
+
+[[setting]]
+key = "poll_interval"
+type = "int"
+label = "Poll interval"
+default = 2000
+min = 250
+max = 60000
+advanced = true
 
 [[service]]
 id = "service"
