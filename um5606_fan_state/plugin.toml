@@ -1,6 +1,6 @@
 id = "thatonecalculator/um5606_fan_state"
 name = "ASUS UM5606 Fan State"
-version = "1.0.3"
+version = "1.0.4"
 min_noctalia = "5.0.0"
 author = "ThatOneCalculator"
 license = "MIT"
@@ -9,7 +9,7 @@ icon = "car-fan"
 description = "Set the fan state on the ZenBook S 16 UM5606."
 
 [[setting]]
-key = "show_label"
+key = "label_key"
 type = "bool"
 label = "Show label"
 default = false

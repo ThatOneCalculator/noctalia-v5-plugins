@@ -4,7 +4,7 @@
 -- runs for the whole session. This widget only reflects the published "status"
 -- and cycles states by writing to the "command" channel.
 
-local showLabel = noctalia.getConfig("show_label")
+local showLabel = noctalia.getConfig("label_key")
 
 local STATES = {
     [0] = { label = "Standard",         glyph = "car-fan",   color = "on_surface" },
